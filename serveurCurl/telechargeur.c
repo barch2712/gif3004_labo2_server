@@ -1,7 +1,7 @@
 #include "telechargeur.h"
 
-// TODO À MODIFIER SELON L'ADRESSE FOURNIE DANS L'ENONCE
-const char baseUrl[] = "http://";
+// Adresse du serveur
+const char baseUrl[] = "http://wcours.gel.ulaval.ca/2017/h/GIF3004/default/tp2_files/";
 
 
 static size_t WriteMemoryCallback(void *contents, size_t size, size_t nmemb, void *userp){
