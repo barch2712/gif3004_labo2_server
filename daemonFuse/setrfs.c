@@ -193,7 +193,16 @@ static int setrfs_readdir(const char *path, void *buf, fuse_fill_dir_t filler,
 // 3) il se peut que le fichier n'existe tout simplement pas. Dans ce cas, vous devez renvoyer le code d'erreur approprié.
 //
 // Voir man open(2) pour les détails concernant ce que cette fonction doit faire et comment renvoyer une erreur
-// (par exemple dans le cas d'un fichier non existant)
+// (par exemple dans le cas d'un fichier non existant).
+//
+// Notez en particulier que le file handle (aussi appelé file descriptor) doit satisfaire les conditions suivantes :
+//	* Il doit être un entier non signé
+//	* Il doit être _différent_ pour chaque fichier ouvert. Si un fichier est fermé (en utilisant close), alors il
+//		est valide de réutiliser son file descriptor (mais vous n'y êtes pas obligés)
+//	* Il ne doit pas valoir 0, 1 ou 2, qui sont déjà utilisés pour stdin, stdout et stderr.
+// Petit truc : la signification exacte du file handle est laissée à la discrétion du système de fichier (vous).
+// Vous pouvez donc le choisir de la manière qui vous arrange le plus, en autant que cela respecte les conditions
+// énoncées plus haut. Rappelez-vous en particulier qu'un pointeur est unique...
 static int setrfs_open(const char *path, struct fuse_file_info *fi)
 {
 		// TODO
@@ -212,6 +221,9 @@ static int setrfs_open(const char *path, struct fuse_file_info *fi)
 //
 // Voir man read(2) pour plus de détails sur cette fonction. En particulier, notez que cette fonction peut retourner
 // _moins_ d'octets que ce que demandé, mais ne peut en aucun cas en retourner _plus_.
+//
+// N'oubliez pas que vous recevez le file handle dans la structure fuse_file_info. Vous n'êtes pas forcés de l'utiliser,
+// mais si vous y avez mis quelque chose d'utile, il est facile de le récupérer!
 static int setrfs_read(const char *path, char *buf, size_t size, off_t offset,
 		    struct fuse_file_info *fi)
 {
