@@ -1,7 +1,7 @@
 #include "telechargeur.h"
 
 // Adresse du serveur
-const char baseUrl[] = "http://wcours.gel.ulaval.ca/2017/h/GIF3004/default/tp2_files/";
+const char baseUrl[] = "http://wcours.gel.ulaval.ca/2017/h/GIF3004/default/labo2_fichiers/";
 
 
 static size_t WriteMemoryCallback(void *contents, size_t size, size_t nmemb, void *userp){
