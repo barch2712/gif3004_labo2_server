@@ -35,11 +35,12 @@ void executeRequete(int pipeFd, char* reqBuffer){
 
     // On cree l'URL
     struct msgReq req;
+    char index[] = "index.txt";
     memcpy(&req, reqBuffer, sizeof req);
-    char* fname = malloc(req.sizePayload + sizeof baseUrl);
+    size_t allocsize = (req.type == REQ_LIST) ? (sizeof index + sizeof baseUrl) : (req.sizePayload + sizeof baseUrl);
+    char* fname = malloc(allocsize);
 
     if(req.type == REQ_LIST){
-        char index[] = "index.txt";
         strncpy(fname, baseUrl, sizeof baseUrl);
         strncat(fname, index, sizeof index);
     }
