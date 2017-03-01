@@ -53,11 +53,11 @@ int main(int argc, char* argv[]){
     // Linux ne supporte pas un chemin de plus de 108 octets (voir man 7 unix)
     char path[108] = "/tmp/unixsocket";
     if(argc > 1)        // On peut également le passer en paramètre
-        strncpy(path, argv[1], sizeof path);
+        strncpy(path, argv[1], sizeof(path));
     unlink(path);       // Au cas ou le fichier liant le socket UNIX existerait deja
 
     // On initialise la liste des requêtes
-    memset(&reqList, 0, sizeof reqList);
+    memset(&reqList, 0, sizeof(reqList));
 
     // TODO
     // Implémentez ici le code permettant d'attacher la fonction "gereSignal" au signal SIGUSR1

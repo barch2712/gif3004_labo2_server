@@ -52,22 +52,22 @@ int traiterConnexions(struct requete reqList[], int maxlen){
             for(int i = 0; i < maxlen; i++){
                 if(reqList[i].status == REQ_STATUS_LISTEN && FD_ISSET(reqList[i].fdSocket, &setSockets)){
                     struct msgReq req;
-                    char* buffer = malloc(sizeof req);
+                    char* buffer = malloc(sizeof(req));
 
                     // On lit les donnees sur le socket
                     if(VERBOSE)
                         printf("Lecture de la requete sur le socket %i\n", reqList[i].fdSocket);
-                    octetsTraites = read(reqList[i].fdSocket, buffer, sizeof req);
+                    octetsTraites = read(reqList[i].fdSocket, buffer, sizeof(req));
                     if(octetsTraites == -1){
                         perror("Erreur en effectuant un read() sur un socket pret");
                         exit(1);
                     }
 
-                    memcpy(&req, buffer, sizeof req);
+                    memcpy(&req, buffer, sizeof(req));
                     buffer = realloc(buffer, sizeof(req) + req.sizePayload);
                     octetsTraites = read(reqList[i].fdSocket, buffer + sizeof(req), req.sizePayload);
                     if(VERBOSE){
-                        printf("\t%i octets lus au total\n", req.sizePayload + sizeof req);
+                        printf("\t%i octets lus au total\n", req.sizePayload + sizeof(req));
                         printf("\tContenu de la requete : %s\n", buffer + sizeof(req));
                     }
 

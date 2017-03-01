@@ -36,16 +36,16 @@ void executeRequete(int pipeFd, char* reqBuffer){
     // On cree l'URL
     struct msgReq req;
     char index[] = "index.txt";
-    memcpy(&req, reqBuffer, sizeof req);
-    size_t allocsize = (req.type == REQ_LIST) ? (sizeof index + sizeof baseUrl) : (req.sizePayload + sizeof baseUrl);
+    memcpy(&req, reqBuffer, sizeof(req));
+    size_t allocsize = (req.type == REQ_LIST) ? (sizeof(index) + sizeof(baseUrl)) : (req.sizePayload + sizeof(baseUrl));
     char* fname = malloc(allocsize);
 
     if(req.type == REQ_LIST){
-        strncpy(fname, baseUrl, sizeof baseUrl);
-        strncat(fname, index, sizeof index);
+        strncpy(fname, baseUrl, sizeof(baseUrl));
+        strncat(fname, index, sizeof(index));
     }
     else if(req.type == REQ_READ){
-        strncpy(fname, baseUrl, sizeof baseUrl);
+        strncpy(fname, baseUrl, sizeof(baseUrl));
         strncat(fname, reqBuffer + sizeof(req), req.sizePayload);
     }
     else{

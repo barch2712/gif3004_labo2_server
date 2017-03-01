@@ -55,8 +55,8 @@ void* setrfs_init(struct fuse_conn_info *conn){
 	cache.rootDirIndex = NULL;
 	cache.firstFile = NULL;
 	pthread_mutex_init(&(cache.mutex), NULL);
-	char *cachePtr = malloc(sizeof cache);
-	memcpy(cachePtr, &cache, sizeof cache);
+	char *cachePtr = malloc(sizeof(cache));
+	memcpy(cachePtr, &cache, sizeof(cache));
 	return (void*)cachePtr;
 }
 
@@ -115,12 +115,12 @@ static int setrfs_readdir(const char *path, void *buf, fuse_fill_dir_t filler,
 
 	    // Ecriture des parametres du socket
 	    struct sockaddr_un sockInfo;
-	    memset(&sockInfo, 0, sizeof sockInfo);
+	    memset(&sockInfo, 0, sizeof(sockInfo));
 	    sockInfo.sun_family = AF_UNIX;
-	    strncpy(sockInfo.sun_path, unixSockPath, sizeof sockInfo.sun_path - 1);
+	    strncpy(sockInfo.sun_path, unixSockPath, sizeof(sockInfo.sun_path) - 1);
 
 		// Connexion
-	    if(connect(sock, (const struct sockaddr *) &sockInfo, sizeof sockInfo) < 0){
+	    if(connect(sock, (const struct sockaddr *) &sockInfo, sizeof(sockInfo)) < 0){
 	        perror("Erreur connect");
 	        exit(1);
 	    }
@@ -134,7 +134,7 @@ static int setrfs_readdir(const char *path, void *buf, fuse_fill_dir_t filler,
 
 		// On attend et on recoit le fichier demande
 		struct msgRep rep;
-		octetsTraites = read(sock, &rep, sizeof rep);
+		octetsTraites = read(sock, &rep, sizeof(rep));
 		if(octetsTraites == -1){
 			perror("Erreur en effectuant un read() sur un socket pret");
 			exit(1);
@@ -168,7 +168,7 @@ static int setrfs_readdir(const char *path, void *buf, fuse_fill_dir_t filler,
 	int countInode = 1;
 	while(nomFichier != NULL){
 		struct stat st;
-		memset(&st, 0, sizeof st);
+		memset(&st, 0, sizeof(st));
 		st.st_ino = 1; 			// countInode++;
 		st.st_mode = (S_IFREG & S_IFMT) | 0777;	// Fichier regulier, permissions 777
 		//if(VERBOSE)

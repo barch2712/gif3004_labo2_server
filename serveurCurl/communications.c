@@ -10,7 +10,7 @@ int envoyerMessage(int socket, void *header, char* payload){
 
     unsigned int totalEnvoi = 0;
     while(totalEnvoi < headerS->sizePayload){
-        octetsEcrits = write(socket, payload, headerS->sizePayload - totalEnvoi);
+        octetsEcrits = write(socket, payload + totalEnvoi, headerS->sizePayload - totalEnvoi);
         if(octetsEcrits < 0){
             printf("Erreur lors de l'envoi du payload : %i octets ecrits sur %i (derniere ecriture : %i)\n", totalEnvoi, headerS->sizePayload, octetsEcrits);
             return octetsEcrits;
