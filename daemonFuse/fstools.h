@@ -14,6 +14,7 @@ struct cacheFichier{
 	char* nom;                     // Nom du fichier
 	char* data;                    // Données contenues dans le fichier
 	size_t len;                    // Longueur des données
+	off_t offset;                  // Décalage (offset) actuel par rapport au début du fichier
 	unsigned int countOpen;        // Nombre de programmes ayant ouvert ce fichier
 	struct cacheFichier *prev;     // Pointeur vers le fichier précédent dans la liste chaînée
 	struct cacheFichier *next;     // Pointeur vers le fichier suivant dans la liste chaînée

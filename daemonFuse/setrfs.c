@@ -220,7 +220,9 @@ static int setrfs_open(const char *path, struct fuse_file_info *fi)
 // 4) Retourner le nombre d'octets copiés
 //
 // Voir man read(2) pour plus de détails sur cette fonction. En particulier, notez que cette fonction peut retourner
-// _moins_ d'octets que ce que demandé, mais ne peut en aucun cas en retourner _plus_.
+// _moins_ d'octets que ce que demandé, mais ne peut en aucun cas en retourner _plus_. Par ailleurs, comme indiqué
+// dans la documentation, cette fonction doit avancer le pointeur de position dans le fichier. Vous pouvez utiliser
+// le champ offset de la structure cacheFichier pour retenir cette position entre les différents appels à read().
 //
 // N'oubliez pas que vous recevez le file handle dans la structure fuse_file_info. Vous n'êtes pas forcés de l'utiliser,
 // mais si vous y avez mis quelque chose d'utile, il est facile de le récupérer!
