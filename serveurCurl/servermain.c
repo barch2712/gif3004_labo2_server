@@ -41,7 +41,7 @@ struct requete reqList[MAX_CONNEXIONS];
 
 void gereSignal(int signo) {
     // Fonction affichant des statistiques sur les tâches en cours
-    // lorsque SIGUSR1 (et _seulement_ SIGUSR1) est reçu
+    // lorsque SIGUSR2 (et _seulement_ SIGUSR2) est reçu
     // TODO
 
 }
@@ -60,7 +60,7 @@ int main(int argc, char* argv[]){
     memset(&reqList, 0, sizeof(reqList));
 
     // TODO
-    // Implémentez ici le code permettant d'attacher la fonction "gereSignal" au signal SIGUSR1
+    // Implémentez ici le code permettant d'attacher la fonction "gereSignal" au signal SIGUSR2
 
 
     // TODO

@@ -4,6 +4,7 @@
 const char baseUrl[] = "http://wcours.gel.ulaval.ca/2017/h/GIF3004/default/labo2_fichiers/";
 
 
+// Fonction utilisée à l'interne, vous n'avez pas à l'utiliser directement
 static size_t WriteMemoryCallback(void *contents, size_t size, size_t nmemb, void *userp){
     size_t realsize = size * nmemb;
     struct MemoryStructCurl *mem = (struct MemoryStructCurl *)userp;
@@ -88,9 +89,9 @@ void executeRequete(int pipeFd, char* reqBuffer){
             curl_easy_strerror(res));
         long http_code = 0;
         curl_easy_getinfo(curl_handle, CURLINFO_RESPONSE_CODE, &http_code);
-        fprintf(stderr, "HTTP code returned: %i\n", http_code);
+        fprintf(stderr, "HTTP code returned: %ld\n", http_code);
         size_t buferror = 0;
-        unsigned int c = write(pipeFd, (char*)&buferror, sizeof(size_t));
+        write(pipeFd, (char*)&buferror, sizeof(size_t));
     }
     else {
          // Nous envoyons d'abord la taille du buffer

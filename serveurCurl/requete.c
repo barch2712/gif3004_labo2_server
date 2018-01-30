@@ -11,7 +11,7 @@ int nouvelleRequete(struct requete reqList[], int lenreq){
 
 int envoyerReponses(struct requete reqList[], int lenreq){
     // Cette fonction est déjà implémentée pour vous
-    int compteur = 0, octetsTraites;
+    int compteur = 0;
     for(int i = 0; i < lenreq; i++){
         if(reqList[i].status == REQ_STATUS_READYTOSEND){
             // On cree le header (indiquant la taille)
@@ -27,7 +27,7 @@ int envoyerReponses(struct requete reqList[], int lenreq){
             if(VERBOSE)
                 printf("Taille envoyee %u\n", repHeader.sizePayload);
 
-            octetsTraites = envoyerMessage(reqList[i].fdSocket, &repHeader, reqList[i].buf);
+            envoyerMessage(reqList[i].fdSocket, &repHeader, reqList[i].buf);
 
             // On libere la memoire et on designe le slot comme libre
             // pour accueillir une nouvelle connexion

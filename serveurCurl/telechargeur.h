@@ -16,9 +16,6 @@ struct MemoryStructCurl {
   size_t size;
 };
 
-// Fonction utilisée à l'interne, vous n'avez pas à l'utiliser directement
-static size_t WriteMemoryCallback(void *contents, size_t size, size_t nmemb, void *userp);
-
 // Reçoit deux arguments :
 // pipeFd est le descripteur de fichier (file descriptor) du pipe utilisé pour retourner le fichier téléchargé
 // reqBuffer est un buffer contenant la requête envoyée par le client (y compris l'en-tête)
