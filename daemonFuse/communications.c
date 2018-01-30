@@ -3,7 +3,7 @@
 int envoyerMessage(int socket, void *header, char* payload){
     struct msgRep *headerS = (struct msgRep*)header;
     int octetsEcrits = write(socket, (char*)headerS, sizeof(struct msgRep));
-    if(octetsEcrits < sizeof(struct msgRep)){
+    if(octetsEcrits < 0 || (unsigned int)octetsEcrits < sizeof(struct msgRep)){
         printf("Erreur lors de l'envoi du header : %i octets ecrits sur %i\n", octetsEcrits, sizeof(struct msgRep));
         return -1;
     }
