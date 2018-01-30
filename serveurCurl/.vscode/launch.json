@@ -1,0 +1,24 @@
+{
+    // Use IntelliSense to learn about possible attributes.
+    // Hover to view descriptions of existing attributes.
+    // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
+    "version": "0.2.0",
+    "configurations": [
+
+        {
+            "type": "gdb",
+            "request": "attach",
+            "gdbpath": "${env:HOME}/arm-cross-comp-env/arm-raspbian-linux-gnueabihf/bin/arm-raspbian-linux-gnueabihf-gdb",
+            "name": "Debogage distant avec gdbserver",
+            "executable": "./build/tp2serveur",
+            "target": "adresse_de_votre_raspberry_pi:4567",
+            "remote": true,
+            "autorun": [
+                "set sysroot ${env:HOME}/arm-cross-comp-env/arm-raspbian-linux-gnueabihf/arm-raspbian-linux-gnueabihf/sysroot/"
+            ],
+            "cwd": "${workspaceRoot}",
+            "preLaunchTask": "syncAndStartGDB"
+        }
+
+    ]
+}
