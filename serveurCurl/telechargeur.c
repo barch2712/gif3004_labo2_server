@@ -1,7 +1,7 @@
 #include "telechargeur.h"
 
 // Adresse du serveur
-const char baseUrl[] = "http://wcours.gel.ulaval.ca/2017/h/GIF3004/default/labo2_fichiers/";
+const char baseUrl[] = "http://wcours.gel.ulaval.ca/2019/h/GIF3004/default/8fichiers/labo2/";
 
 
 // Fonction utilisée à l'interne, vous n'avez pas à l'utiliser directement
