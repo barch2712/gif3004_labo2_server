@@ -139,6 +139,8 @@ static int setrfs_getattr(const char *path, struct stat *stbuf)
 	set_file_type(path, stbuf);
 	set_file_mode_all_permissions(stbuf);
 	set_file_number_hardlink(stbuf);
+
+	return 0;
 }
 
 
