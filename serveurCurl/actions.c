@@ -14,6 +14,16 @@ int verifierNouvelleConnexion(struct requete reqList[], int maxlen, int socket){
     // Cette fonction doit retourner 0 si elle n'a pas acceptée de nouvelle connexion, ou 1 dans le cas contraire.
 
     // TODO
+    int req = nouvelleRequete(reqList, maxlen);
+    if (req >= 0) {
+        int desc = accept(socket, NULL, NULL);
+        if (desc >= 0) {
+            reqList[req].fdSocket = desc;
+            reqList[req].status = REQ_STATUS_LISTEN;
+            return 1;
+        }
+    }
+    return 0;
 }
 
 int traiterConnexions(struct requete reqList[], int maxlen){
@@ -75,6 +85,12 @@ int traiterConnexions(struct requete reqList[], int maxlen){
                     // Voyez man pipe pour plus d'informations sur son fonctionnement
                     // TODO
 
+                    malloc(sizeof(req.sizePayload));
+                    memcpy(reqList[i].filename, buffer + sizeof(req), req.sizePayload);
+
+                    int fd[2];
+                    pipe(fd);
+
                     // Une fois le pipe initialisé, vous devez effectuer un fork, à l'aide de la fonction du même nom
                     // Cela divisera votre processus en deux nouveaux processus, un parent et un enfant.
                     // - Dans le processus enfant, vous devez appeler la fonction executeRequete() en lui donnant
@@ -87,6 +103,18 @@ int traiterConnexions(struct requete reqList[], int maxlen){
                     // Pour plus d'informations sur la fonction fork() et sur la manière de détecter si vous êtes dans
                     // le parent ou dans l'enfant, voyez man fork(2).
                     // TODO
+                    pid_t pid = fork();
+                    if (pid > 0) {
+                        close(fd[1]);
+                        reqList[i].fdPipe = fd[0];
+                        reqList[i].pid = pid;
+                        reqList[i].status = REQ_STATUS_INPROGRESS;
+                    } else {
+                        close(fd[0]);
+                        executeRequete(fd[1], buffer);
+                        close(fd[1]);
+                        exit(EXIT_SUCCESS);
+                    }
 
                 }
             }
@@ -121,4 +149,42 @@ int traiterTelechargements(struct requete reqList[], int maxlen){
     // Cette fonction doit retourner 0 si elle n'a lu aucune donnée supplémentaire, ou un nombre > 0 si c'est le cas.
 
     // TODO
+    int nfdsSockets = 0;
+    struct timeval tvS;
+    tvS.tv_sec = 0; tvS.tv_usec = SLEEP_TIME;
+    fd_set setSockets;
+    FD_ZERO(&setSockets);
+
+    for(int i = 0; i < maxlen; i++){
+        if(reqList[i].status == REQ_STATUS_INPROGRESS){
+            FD_SET(reqList[i].fdSocket, &setSockets);
+            nfdsSockets = (nfdsSockets <= reqList[i].fdSocket) ? reqList[i].fdSocket+1 : nfdsSockets;
+        }
+    }
+
+    if(nfdsSockets > 0){
+        int s = select(nfdsSockets, &setSockets, NULL, NULL, &tvS);
+        if(s > 0){
+            for(int i = 0; i < maxlen; i++) {
+                if(reqList[i].status == REQ_STATUS_INPROGRESS && FD_ISSET(reqList[i].fdSocket, &setSockets)){
+                    size_t read_size;
+                    read(reqList[i].fdPipe, &read_size, sizeof(size_t));
+                    reqList[i].buf = malloc(read_size);
+
+                    size_t processed_size = 0;
+                    while(processed_size < read_size) {
+                        size_t n = read(reqList[i].fdPipe, reqList[i].buf + processed_size, read_size - processed_size);
+                        processed_size += n;
+                    }
+
+                    reqList[i].len = read_size;
+                    reqList[i].status = REQ_STATUS_READYTOSEND;
+
+                    waitpid(reqList[i].pid, NULL, 0);
+                    close(reqList[i].fdPipe);
+                }
+            }
+        }
+    }
+    return nfdsSockets;
 }

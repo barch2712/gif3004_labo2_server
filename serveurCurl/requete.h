@@ -20,6 +20,7 @@ struct requete{
         pid_t pid;          // Si un processus enfant est lancé, ID de ce processus
         char* buf;          // Si les données sont prêtes, pointe vers le buffer contenant ces données
         size_t len;         // Si les données sont prêtes, contient la longueur des données (en octets)
+        char* filename;
 };
 
 // Recherche une entrée inoccupée dans la table des connexions passée en argument et retourne son index.
