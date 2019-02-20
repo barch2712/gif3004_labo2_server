@@ -85,7 +85,7 @@ int get_size_file(struct cacheFichier *file)
 void set_file_type(const char *path, struct stat *stbuf)
 {
 	int ret = strcmp(path, "/"); //check if path is root (the only directory for this project)
-	stbuf->st_mode |= (ret == 0)? __S_IFBLK:__S_IFREG;
+	stbuf->st_mode |= (ret == 0)? __S_IFDIR:__S_IFREG;
 }
 
 void set_file_mode_all_permissions(struct stat *stbuf)
