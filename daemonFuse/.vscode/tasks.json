@@ -6,7 +6,7 @@
         {
             "label": "syncAndStartGDB",
             "type": "shell",
-            "command": "./syncAndStartGDB.sh ${workspaceRoot} pi",
+            "command": "./syncAndStartGDB.sh ${workspaceRoot} gifpi.duckdns.org",
             "presentation": {
                 "reveal": "always",
                 "panel": "new"

@@ -60,6 +60,47 @@ void* setrfs_init(struct fuse_conn_info *conn){
 	return (void*)cachePtr;
 }
 
+void init_struct_stat(struct stat *setr_stat)
+{
+	setr_stat->st_atime = 0;
+	setr_stat->st_blksize = 512; // "prefered" block size for efficient filesystem I/O minimum 512
+	setr_stat->st_blocks = 1; // minimum 1 block 
+	setr_stat->st_ctime = 0;
+	setr_stat->st_dev = 0;
+	setr_stat->st_gid = 0;
+	setr_stat->st_ino = 0;
+	setr_stat->st_mode = 0;
+	setr_stat->st_mtime = 0;
+	setr_stat->st_nlink = 0;
+	setr_stat->st_rdev = 0;
+	setr_stat->st_size = 0;
+	setr_stat->st_uid = 0;
+}
+
+int get_size_file(struct cacheFichier *file)
+{
+	return (file==NULL)?1:file->len;
+}
+
+void set_file_type(const char *path, struct stat *stbuf)
+{
+	int ret = strcmp(path, "/"); //check if path is root (the only directory for this project)
+	stbuf->st_mode |= (ret == 0)? __S_IFBLK:__S_IFREG;
+}
+
+void set_file_mode_all_permissions(struct stat *stbuf)
+{
+	stbuf->st_mode |= S_IRWXG; // read write execute/search by groups
+	stbuf->st_mode |= S_IRWXO; // read write execute/search by others
+	stbuf->st_mode |= S_IRWXU; // read write execute/search by owner 
+}
+
+void set_file_number_hardlink(struct stat *stbuf)
+{
+	//file is pointed by parent directory. directory is pointed by parent directory and itsef
+	stbuf->st_nlink = (stbuf->st_mode & __S_IFREG)?1:2;
+}
+
 
 // Cette fonction est appelée pour obtenir les attributs d'un fichier
 // Voyez la page man stat(2) pour des détails sur la structure 'stat' que vous devez remplir
@@ -84,11 +125,22 @@ static int setrfs_getattr(const char *path, struct stat *stbuf)
 
 	// Si vous avez enregistré dans données dans setrfs_init, alors elles sont disponibles dans context->private_data
 	// Ici, voici un exemple où nous les utilisons pour donner le bon propriétaire au fichier (l'utilisateur courant)
+
+	// TODO
+	init_struct_stat(stbuf);
 	stbuf->st_uid = context->uid;		// On indique l'utilisateur actuel comme proprietaire
 	stbuf->st_gid = context->gid;		// Idem pour le groupe
 
-	// TODO
+	//retrieve cached file in order to get attr
+	struct cacheData *cache_private_data = (struct cacheData*) context->private_data;
+	struct cacheFichier *file = trouverFichierEnCache(path, cache_private_data);
+
+	stbuf->st_size = get_size_file(file);
+	set_file_type(path, stbuf);
+	set_file_mode_all_permissions(stbuf);
+	set_file_number_hardlink(stbuf);
 }
+
 
 
 // Cette fonction est utilisée pour lister un dossier. Elle est déjà implémentée pour vous
@@ -170,7 +222,7 @@ static int setrfs_readdir(const char *path, void *buf, fuse_fill_dir_t filler,
 		struct stat st;
 		memset(&st, 0, sizeof(st));
 		st.st_ino = 1; 			// countInode++;
-		st.st_mode = (S_IFREG & S_IFMT) | 0777;	// Fichier regulier, permissions 777
+		st.st_mode = (__S_IFBLK & __S_IFBLK) | 0777;	// Fichier regulier, permissions 777
 		//if(VERBOSE)
 		//	printf("Insertion du fichier %s dans la liste du repertoire\n", nomFichier);
 		if (filler(buf, nomFichier, &st, 0)){
@@ -182,6 +234,34 @@ static int setrfs_readdir(const char *path, void *buf, fuse_fill_dir_t filler,
 	free(nomFichier);
 
 	return 0;
+}
+
+int setrfs_open_error_status(char status) {
+	int err_status;
+	switch(status)
+	{
+		case STATUS_OK:
+			printf("STATUS_OK\n");
+			err_status = 0;
+			break;
+		case STATUS_REQ_INVALIDE:
+			printf("STATUS_REQ_INVALIDE\n");
+			err_status = ENOENT;
+			break;
+		case STATUS_TYPE_REQ_INCONNU:
+			printf("STATUS_TYPE_REQ_INCONNU\n");
+			err_status = ENOENT;
+			break;
+		case STATUS_ERREUR_TELECHARGEMENT:
+			printf("STATUS_ERREUR_TELECHARGEMENT\n");
+			err_status = ENOENT;
+			break;
+		default:
+			printf("unknown error\n");
+			err_status = ENOENT;
+			break;
+	}
+	return err_status;
 }
 
 
@@ -206,6 +286,78 @@ static int setrfs_readdir(const char *path, void *buf, fuse_fill_dir_t filler,
 static int setrfs_open(const char *path, struct fuse_file_info *fi)
 {
 		// TODO
+	struct fuse_context *context = fuse_get_context(); 
+	struct cacheData *cache = (struct cacheData*)context->private_data; 
+
+	pthread_mutex_lock(&(cache->mutex));
+	struct cacheFichier *file = incrementeCompteurFichier(path, cache, 1); //?
+	pthread_mutex_unlock(&(cache->mutex));
+
+	if(file == NULL)
+	{
+		// On ouvre un socket
+		int sock = socket(AF_UNIX, SOCK_STREAM, 0);
+	    if(sock == -1){
+	        perror("Impossible d'initialiser le socket UNIX");
+	        return -1;
+	    }
+
+		// Ecriture des parametres du socket
+	    struct sockaddr_un sockInfo;
+	    memset(&sockInfo, 0, sizeof(sockInfo));
+	    sockInfo.sun_family = AF_UNIX;
+	    strncpy(sockInfo.sun_path, unixSockPath, sizeof(sockInfo.sun_path) - 1);
+
+		// Connexion
+	    if(connect(sock, (const struct sockaddr *) &sockInfo, sizeof(sockInfo)) < 0){
+	        perror("Erreur connect");
+	        exit(1);
+	    }
+
+		// Formatage et envoi de la requete
+	    struct msgReq req;
+	    req.type = REQ_READ; // file content needed
+	    req.sizePayload = strlen(path) + 1; //size_t len = strlen() + 1;		// +1 pour le caractere NULL de fin de chaine
+		int octetsTraites = envoyerMessage(sock, &req, path); 
+
+		// On attend et on recoit le fichier demande
+		struct msgRep rep;
+		octetsTraites = read(sock, &rep, sizeof(rep));
+		if(octetsTraites == -1){
+			perror("Erreur en effectuant un read() sur un socket pret");
+			exit(1);
+		}
+		if(VERBOSE)
+			printf("Lecture de l'en-tete de la reponse sur le socket %i\n", sock);
+	
+		int error_status = setrfs_open_error_status(rep.status); 
+		if(error_status != 0) return error_status;
+
+		file = malloc(sizeof(struct cacheFichier));
+		memset(file, 0, sizeof(struct cacheFichier));
+		file->data = malloc(rep.sizePayload);
+		file->nom = malloc(req.sizePayload);
+
+		unsigned totalRecu = 0;
+		// Il se peut qu'on ait a faire plusieurs lectures si le fichier est gros
+		while(totalRecu < rep.sizePayload){
+			octetsTraites = read(sock, file->data + totalRecu, rep.sizePayload - totalRecu);
+			totalRecu += octetsTraites;
+		}
+
+		file->countOpen = 1;
+		strcpy(file->nom, path);
+		file->len = rep.sizePayload;
+		file->prev = NULL;
+		file ->next = NULL;
+
+		pthread_mutex_lock(&(cache->mutex));
+		insererFichier(file, cache);
+		pthread_mutex_unlock(&(cache->mutex));
+	}
+	
+	fi->fh = (uint64_t) file;
+	return 0;
 }
 
 
@@ -218,7 +370,6 @@ static int setrfs_open(const char *path, struct fuse_file_info *fi)
 // 2) Si oui, réduire la taille pour lire le reste du fichier
 // 3) Copier le même nombre d'octets depuis le cache vers le pointeur buf
 // 4) Retourner le nombre d'octets copiés
-//
 // Voir man read(2) pour plus de détails sur cette fonction. En particulier, notez que cette fonction peut retourner
 // _moins_ d'octets que ce que demandé, mais ne peut en aucun cas en retourner _plus_. Par ailleurs, comme indiqué
 // dans la documentation, cette fonction doit avancer le pointeur de position dans le fichier. Vous pouvez utiliser
@@ -230,6 +381,31 @@ static int setrfs_read(const char *path, char *buf, size_t size, off_t offset,
 		    struct fuse_file_info *fi)
 {
 		// TODO
+	struct fuse_context *context = fuse_get_context();
+	struct cacheData *cache = (struct cacheData*)context->private_data; 
+
+	pthread_mutex_lock(&(cache->mutex));	
+	struct cacheFichier *fichier = trouverFichierEnCache(path, (struct cacheData*)context->private_data);
+	pthread_mutex_unlock(&(cache->mutex));
+	
+	if(fichier == NULL)
+	{
+		return -1;
+	}
+	if(offset < fichier->len)
+	{
+		if(offset + size > fichier->len)
+		{
+			size = fichier->len - offset;
+		}
+		memcpy(buf, fichier->data + offset, size);
+	}
+	else
+	{
+		size = 0;
+	}
+return size;
+
 }
 
 
@@ -239,6 +415,24 @@ static int setrfs_read(const char *path, char *buf, size_t size, off_t offset,
 static int setrfs_release(const char *path, struct fuse_file_info *fi)
 {
 		// TODO
+	struct fuse_context *context = fuse_get_context();
+	struct cacheData *cache = (struct cacheData*)context->private_data;
+	struct cacheFichier *fichier = trouverFichierEnCache(path, cache);
+	if(fichier == NULL)
+	{
+		return -1;
+	}
+	if(fichier->countOpen == 1)
+	{
+		retireFichier(fichier, cache);
+	}
+	else
+	{
+		(fichier->countOpen)--;
+	}
+
+return 0;
+
 }
 
 
