@@ -133,7 +133,9 @@ static int setrfs_getattr(const char *path, struct stat *stbuf)
 
 	//retrieve cached file in order to get attr
 	struct cacheData *cache_private_data = (struct cacheData*) context->private_data;
+	pthread_mutex_lock(&(cache->mutex));
 	struct cacheFichier *file = trouverFichierEnCache(path, cache_private_data);
+	pthread_mutex_unlock(&(cache->mutex));
 
 	stbuf->st_size = get_size_file(file);
 	set_file_type(path, stbuf);
@@ -362,7 +364,18 @@ static int setrfs_open(const char *path, struct fuse_file_info *fi)
 	return 0;
 }
 
-
+int get_size_file(off_t offset, size_t len, size_t size)
+{
+	if(size > len-offset)
+	{
+		return len-offset;
+	}
+	else
+	{
+		return 0;
+	}
+	
+}
 // Cette fonction est appelée lorsqu'un processus lit un fichier après l'avoir ouvert.
 // FUSE s'occupe déjà de vous redonner la structure fuse_file_info que vous devez avoir remplie dans setrfs_open()
 // Les autres paramètres d'entrée sont la taille maximale à lire et le décalage (offset) du début de la lecture
@@ -392,20 +405,11 @@ static int setrfs_read(const char *path, char *buf, size_t size, off_t offset,
 	
 	if(fichier == NULL)
 	{
-		return -1;
+		return ENOENT;
 	}
-	if(offset < fichier->len)
-	{
-		if(offset + size > fichier->len)
-		{
-			size = fichier->len - offset;
-		}
-		memcpy(buf, fichier->data + offset, size);
-	}
-	else
-	{
-		size = 0;
-	}
+	size = get_size_file(offset, file->len, size);
+	if(size > 0) memcpy(buf, file->data + offset, size);
+
 return size;
 
 }
@@ -419,11 +423,17 @@ static int setrfs_release(const char *path, struct fuse_file_info *fi)
 		// TODO
 	struct fuse_context *context = fuse_get_context();
 	struct cacheData *cache = (struct cacheData*)context->private_data;
+	
+	pthread_mutex_lock(&(cache->mutex));
 	struct cacheFichier *fichier = trouverFichierEnCache(path, cache);
+	pthread_mutex_unlock(&(cache->mutex));
+
 	if(fichier == NULL)
 	{
 		return -1;
 	}
+
+	pthread_mutex_lock(&(cache->mutex));
 	if(fichier->countOpen == 1)
 	{
 		retireFichier(fichier, cache);
@@ -432,6 +442,7 @@ static int setrfs_release(const char *path, struct fuse_file_info *fi)
 	{
 		(fichier->countOpen)--;
 	}
+	pthread_mutex_lock(&(cache->mutex));
 
 return 0;
 
