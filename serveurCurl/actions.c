@@ -149,24 +149,24 @@ int traiterTelechargements(struct requete reqList[], int maxlen){
     // Cette fonction doit retourner 0 si elle n'a lu aucune donnée supplémentaire, ou un nombre > 0 si c'est le cas.
 
     // TODO
-    int nfdsSockets = 0;
+    fd_set setPipes;
+    int nfdsPipes = 0;
     struct timeval tvS;
     tvS.tv_sec = 0; tvS.tv_usec = SLEEP_TIME;
-    fd_set setSockets;
-    FD_ZERO(&setSockets);
+    FD_ZERO(&setPipes);
 
     for(int i = 0; i < maxlen; i++){
         if(reqList[i].status == REQ_STATUS_INPROGRESS){
-            FD_SET(reqList[i].fdSocket, &setSockets);
-            nfdsSockets = (nfdsSockets <= reqList[i].fdSocket) ? reqList[i].fdSocket+1 : nfdsSockets;
+            FD_SET(reqList[i].fdPipe, &setPipes);
+            nfdsPipes = (nfdsPipes <= reqList[i].fdPipe) ? reqList[i].fdPipe+1 : nfdsPipes;
         }
     }
 
-    if(nfdsSockets > 0){
-        int s = select(nfdsSockets, &setSockets, NULL, NULL, &tvS);
+    if(nfdsPipes > 0){
+        int s = select(nfdsPipes, &setPipes, NULL, NULL, &tvS);
         if(s > 0){
             for(int i = 0; i < maxlen; i++) {
-                if(reqList[i].status == REQ_STATUS_INPROGRESS && FD_ISSET(reqList[i].fdSocket, &setSockets)){
+                if(reqList[i].status == REQ_STATUS_INPROGRESS && FD_ISSET(reqList[i].fdPipe, &setPipes)){
                     size_t read_size;
                     read(reqList[i].fdPipe, &read_size, sizeof(size_t));
                     reqList[i].buf = malloc(read_size);
@@ -186,5 +186,5 @@ int traiterTelechargements(struct requete reqList[], int maxlen){
             }
         }
     }
-    return nfdsSockets;
+    return nfdsPipes;
 }
