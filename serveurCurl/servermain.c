@@ -82,7 +82,6 @@ int main(int argc, char* argv[]){
     // TODO
     // Implémentez ici le code permettant d'attacher la fonction "gereSignal" au signal SIGUSR2
     struct sigaction action;
-    // memset?
     action.sa_handler = &gereSignal;
     if (sigaction(SIGUSR2, &action, NULL) < 0) {
         perror("sigaction failed");

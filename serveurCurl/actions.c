@@ -85,7 +85,7 @@ int traiterConnexions(struct requete reqList[], int maxlen){
                     // Voyez man pipe pour plus d'informations sur son fonctionnement
                     // TODO
 
-                    malloc(sizeof(req.sizePayload));
+                    reqList[i].filename = malloc(sizeof(req.sizePayload));
                     memcpy(reqList[i].filename, buffer + sizeof(req), req.sizePayload);
 
                     int fd[2];
@@ -113,7 +113,7 @@ int traiterConnexions(struct requete reqList[], int maxlen){
                         close(fd[0]);
                         executeRequete(fd[1], buffer);
                         close(fd[1]);
-                        exit(EXIT_SUCCESS);
+                        _exit(EXIT_SUCCESS);
                     }
 
                 }
