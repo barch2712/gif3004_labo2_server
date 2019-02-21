@@ -122,10 +122,8 @@ static int setrfs_getattr(const char *path, struct stat *stbuf)
 {
 	// On récupère le contexte
 	struct fuse_context *context = fuse_get_context();
-
-	// Si vous avez enregistré dans données dans setrfs_init, alors elles sont disponibles dans context->private_data
-	// Ici, voici un exemple où nous les utilisons pour donner le bon propriétaire au fichier (l'utilisateur courant)
-
+	struct cacheData *cache = (struct cacheData*)context->private_data;
+	
 	// TODO
 	init_struct_stat(stbuf);
 	stbuf->st_uid = context->uid;		// On indique l'utilisateur actuel comme proprietaire
@@ -400,10 +398,10 @@ static int setrfs_read(const char *path, char *buf, size_t size, off_t offset,
 	struct cacheData *cache = (struct cacheData*)context->private_data; 
 
 	pthread_mutex_lock(&(cache->mutex));	
-	struct cacheFichier *fichier = trouverFichierEnCache(path, (struct cacheData*)context->private_data);
+	struct cacheFichier *file = trouverFichierEnCache(path, (struct cacheData*)context->private_data);
 	pthread_mutex_unlock(&(cache->mutex));
 	
-	if(fichier == NULL)
+	if(file == NULL)
 	{
 		return ENOENT;
 	}
@@ -425,22 +423,22 @@ static int setrfs_release(const char *path, struct fuse_file_info *fi)
 	struct cacheData *cache = (struct cacheData*)context->private_data;
 	
 	pthread_mutex_lock(&(cache->mutex));
-	struct cacheFichier *fichier = trouverFichierEnCache(path, cache);
+	struct cacheFichier *file = trouverFichierEnCache(path, cache);
 	pthread_mutex_unlock(&(cache->mutex));
 
-	if(fichier == NULL)
+	if(file == NULL)
 	{
 		return -1;
 	}
 
 	pthread_mutex_lock(&(cache->mutex));
-	if(fichier->countOpen == 1)
+	if(file->countOpen == 1)
 	{
-		retireFichier(fichier, cache);
+		retireFichier(file, cache);
 	}
 	else
 	{
-		(fichier->countOpen)--;
+		(file->countOpen)--;
 	}
 	pthread_mutex_lock(&(cache->mutex));
 
