@@ -37,6 +37,6 @@ struct msgRep{
 // et son contenu. La même fonction est utilisée pour les deux types de headers, puisqu'ils ont la même taille.
 // Les champs status/type et sizePayload de l'en-tête doivent déjà avoir été assignés à la bonne valeur
 // Retourne le nombre d'octets écrits au total, ou le code d'erreur (négatif) s'il y a lieu
-int envoyerMessage(int socket, void *header, char* payload);
+int envoyerMessage(int socket, void *header, const char* payload);
 
 #endif

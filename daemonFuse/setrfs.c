@@ -77,7 +77,7 @@ void init_struct_stat(struct stat *setr_stat)
 	setr_stat->st_uid = 0;
 }
 
-int get_size_file(struct cacheFichier *file)
+size_t get_size(struct cacheFichier *file)
 {
 	return (file==NULL)?1:file->len;
 }
@@ -135,7 +135,7 @@ static int setrfs_getattr(const char *path, struct stat *stbuf)
 	struct cacheFichier *file = trouverFichierEnCache(path, cache_private_data);
 	pthread_mutex_unlock(&(cache->mutex));
 
-	stbuf->st_size = get_size_file(file);
+	stbuf->st_size = get_size(file);
 	set_file_type(path, stbuf);
 	set_file_mode_all_permissions(stbuf);
 	set_file_number_hardlink(stbuf);
@@ -358,7 +358,7 @@ static int setrfs_open(const char *path, struct fuse_file_info *fi)
 		pthread_mutex_unlock(&(cache->mutex));
 	}
 	
-	fi->fh = (uint64_t) file;
+	fi->fh = (intptr_t) file;
 	return 0;
 }
 

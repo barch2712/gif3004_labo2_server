@@ -165,6 +165,7 @@ int main(int argc, char* argv[]){
         // un petit delai ici pour éviter d'utiliser 100% du CPU inutilement
         if(tacheRealisee == 0)
             usleep(SLEEP_TIME);
+            ;
     }
 
     return 0;

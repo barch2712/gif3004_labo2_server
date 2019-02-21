@@ -1,6 +1,6 @@
 #include "communications.h"
 
-int envoyerMessage(int socket, void *header, char* payload){
+int envoyerMessage(int socket, void *header, const char* payload){
     struct msgRep *headerS = (struct msgRep*)header;
     int octetsEcrits = write(socket, (char*)headerS, sizeof(struct msgRep));
     if(octetsEcrits < 0 || (unsigned int)octetsEcrits < sizeof(struct msgRep)){
